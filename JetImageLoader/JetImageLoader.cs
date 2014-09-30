@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -123,13 +123,13 @@ namespace JetImageLoader
                 Log("[network] loading " + imageUrl);
                 var downloadResult = await Config.DownloaderImpl.DownloadAsync(imageUri);
 
-                if (downloadResult.Exception != null || downloadResult.ResultStream == null)
+                if (downloadResult.Exception != null || downloadResult.ResultStream == null || downloadResult.ContentLength != downloadResult.ResultStream.Length)
                 {
                     Log("[error] failed to download: " + imageUrl);
                     return null;
                 }
 
-                Log("[network] loaded " + imageUrl);
+                Log("[network] loaded " + imageUrl + " size " + downloadResult.ResultStream.Length + " header " + downloadResult.ContentLength);
 
                 if (Config.CacheMode != CacheMode.NoCache)
                 {
@@ -189,13 +189,13 @@ namespace JetImageLoader
                 Log("[network] loading " + imageUriAsString);
                 var downloadResult = await Config.DownloaderImpl.DownloadAsync(imageUri);
 
-                if (downloadResult.Exception != null || downloadResult.ResultStream == null)
+                if (downloadResult.Exception != null || downloadResult.ResultStream == null || downloadResult.ContentLength != downloadResult.ResultStream.Length)
                 {
-                    Log("[error] failed to download: " + imageUriAsString);
+                    Log("[error] failed to download: " );
                     return null;
                 }
 
-                Log("[network] loaded " + imageUriAsString);
+                Log("[network] loaded "  + imageUriAsString + " size " + downloadResult.ResultStream.Length + " header " + downloadResult.ContentLength);
 
                 if (Config.CacheMode != CacheMode.NoCache)
                 {
@@ -214,6 +214,7 @@ namespace JetImageLoader
                                 if (task.IsFaulted || !task.Result)
                                 {
                                     Log("[error] failed to save in storage: " + imageUri);
+                                   
                                 }
                             }
                         );
