@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
@@ -34,8 +34,10 @@ namespace JetImageLoader
             }
 
             Uri imageUri;
+            var bitmapImage = new BitmapImage();
+            bitmapImage.UriSource = new Uri("/Assets/placeholder.jpg", UriKind.RelativeOrAbsolute);
 
-            if (value is string)
+            if (value is string && (value as string).Length > 0 && Uri.IsWellFormedUriString(value as string, UriKind.RelativeOrAbsolute))
             {
                 try
                 {
@@ -43,8 +45,8 @@ namespace JetImageLoader
                 }
                 catch
                 {
-                    // TODO add error log or callback
-                    return null;
+                    //bitmapImage.SetSource(Application.GetResourceStream(new Uri(@"Assets/placeholder.jpg", UriKind.Relative)).Stream);
+                    return bitmapImage;
                 }
             }
             else if (value is Uri)
@@ -53,14 +55,13 @@ namespace JetImageLoader
             }
             else
             {
-                // TODO add error log or callback
-                return null;
+               //bitmapImage.SetSource(Application.GetResourceStream(new Uri(@"Assets/placeholder.jpg", UriKind.Relative)).Stream);
+               return bitmapImage;
             }
 
             if (imageUri.Scheme == "http" || imageUri.Scheme == "https")
             {
-                var bitmapImage = new BitmapImage();
-
+                bitmapImage.UriSource = new Uri("/Assets/placeholder.jpg", UriKind.RelativeOrAbsolute);
                 Task.Factory.StartNew(() => JetImageLoader.LoadImageStream(imageUri).ContinueWith(getImageStreamTask =>
                 {
                     if (getImageStreamTask.Result != null)
@@ -69,11 +70,17 @@ namespace JetImageLoader
                         {
                             try
                             {
+                                //bitmapImage.DecodePixelType = DecodePixelType.Physical;
+                                //bitmapImage.DecodePixelHeight = 100;
+                                //bitmapImage.DecodePixelWidth = 100;
+                                //bitmapImage.DecodePixelType = DecodePixelType.Logical;
+                                getImageStreamTask.Result.Seek(0, System.IO.SeekOrigin.Begin);
                                 bitmapImage.SetSource(getImageStreamTask.Result);
                             }
                             catch
                             {
-                                // catching exceptions, like when source stream is corrupted or is not an image, etc...
+                                //bitmapImage.SetSource(Application.GetResourceStream(new Uri(@"Assets/placeholder.jpg", UriKind.Relative)).Stream);
+                                //return bitmapImage;
                             }
                         });
                     }
@@ -84,6 +91,7 @@ namespace JetImageLoader
 
             return null;
         }
+
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
