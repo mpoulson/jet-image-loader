@@ -8,5 +8,6 @@ namespace JetImageLoader.Network
     {
         public Exception Exception { get; set; }
         public Stream ResultStream { get; set; }
+        public long ContentLength { get; set; }
     }
 }
