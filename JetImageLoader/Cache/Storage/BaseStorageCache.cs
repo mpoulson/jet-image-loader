@@ -88,7 +88,14 @@ namespace JetImageLoader.Cache.Storage
             {
                 try
                 {
-                    await cacheStream.CopyToAsync(fileStream);
+                    //await cacheStream.CopyToAsync(fileStream);
+                    byte[] buffer = new byte[32768];
+                    int read;
+                    while ((read = cacheStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        fileStream.Write(buffer, 0, read);
+                    }
+                    JetImageLoader.Log("[saved] file saved correctly: " + fullFilePath + "  " + fileStream.Length);
                     return true;
                 }
                 catch
