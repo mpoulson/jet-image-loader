@@ -22,7 +22,14 @@ namespace JetImageLoader.Network
 
                     using (response)
                     {
-                        taskComplete.TrySetResult(new DownloadResult { ResultStream = response.GetResponseStream()});
+                        if (response.ContentType.Contains("image"))
+                        {
+                            taskComplete.TrySetResult(new DownloadResult { ResultStream = response.GetResponseStream(), ContentLength = response.ContentLength });
+                        }
+                        else
+                        {
+                            taskComplete.TrySetResult(new DownloadResult { Exception = new Exception() });
+                        }
                     }
                 }
                 catch (Exception e)
