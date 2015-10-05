@@ -1,9 +1,8 @@
-
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
+using Windows.UI.Xaml.Media.Imaging;
 using JetImageLoader.Cache;
 
 namespace JetImageLoader
@@ -14,9 +13,7 @@ namespace JetImageLoader
         /// Used for log output as first symbols
         /// </summary>
         private const string JetImageLoaderLogTag = "[JetImageLoader]";
-
         private static readonly object LockObject = new object();
-
         private static JetImageLoader _instance;
 
         /// <summary>
@@ -30,14 +27,14 @@ namespace JetImageLoader
                 {
                     lock (LockObject)
                     {
-                        if (_instance == null) _instance = new JetImageLoader();
+                        if (_instance == null)
+                            _instance = new JetImageLoader();
                     }
                 }
-
                 return _instance;
             }
         }
-        
+
         protected JetImageLoaderConfig Config;
 
         protected JetImageLoader()
@@ -55,9 +52,8 @@ namespace JetImageLoader
             {
                 throw new ArgumentException("Can not initialize JetImageLoader with empty configuration");
             }
-            
-            if (Config != null) return;
-
+            if (Config != null)
+                return;
             Config = jetImageLoaderConfig;
         }
 
@@ -88,7 +84,7 @@ namespace JetImageLoader
         {
             CheckConfig();
             var bitmapImage = new BitmapImage();
-            bitmapImage.SetSource(await LoadImageStream(imageUri));
+            bitmapImage.SetSource((await LoadImageStream(imageUri)).AsRandomAccessStream());
             return bitmapImage;
         }
 
@@ -100,77 +96,64 @@ namespace JetImageLoader
         public virtual async Task<Stream> LoadImageStream(Uri imageUri)
         {
             CheckConfig();
-
             if (imageUri == null)
             {
                 return null;
             }
-            
             var imageUrl = imageUri.ToString();
-
             if (Config.CacheMode != CacheMode.NoCache)
             {
                 var resultFromCache = await LoadImageStreamFromCache(imageUrl);
-                
                 if (resultFromCache != null)
                 {
                     return resultFromCache;
                 }
             }
-
             try
             {
                 Log("[network] loading " + imageUrl);
                 var downloadResult = await Config.DownloaderImpl.DownloadAsync(imageUri);
-
                 if (downloadResult.Exception != null || downloadResult.ResultStream == null || downloadResult.ContentLength != downloadResult.ResultStream.Length)
                 {
                     Log("[error] failed to download: " + imageUrl);
                     return null;
                 }
-
                 Log("[network] loaded " + imageUrl + " size " + downloadResult.ResultStream.Length + " header " + downloadResult.ContentLength);
-
                 if (Config.CacheMode != CacheMode.NoCache)
                 {
                     if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyMemoryCache)
                     {
                         Config.MemoryCacheImpl.Put(imageUrl, downloadResult.ResultStream);
                     }
-
                     if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyStorageCache)
                     {
                         // Async saving to the storage cache without await
                         var saveAsync = Config.StorageCacheImpl.SaveAsync(imageUrl, downloadResult.ResultStream)
                             .ContinueWith(
-                            task => 
-                                {
-                                    if (task.IsFaulted || !task.Result)
-                                    {
-                                        Log("[error] failed to save in storage: " + imageUri);
-                                    }
-                                }
-                        );
+                            task =>
+                              {
+                                  if (task.IsFaulted || !task.Result)
+                                  {
+                                      Log("[error] failed to save in storage: " + imageUri);
+                                  }
+                              });
                     }
                 }
-
                 return downloadResult.ResultStream;
             }
             catch
             {
                 Log("[error] failed to save loaded image: " + imageUrl);
             }
-
             // May be another thread has saved image to the cache
             // It is real working case
             if (Config.CacheMode != CacheMode.NoCache)
             {
                 var resultFromCache = await LoadImageStreamFromCache(imageUrl);
-                if (resultFromCache != null) return resultFromCache;
+                if (resultFromCache != null)
+                    return resultFromCache;
             }
-
             Log("[error] failed to load image stream from cache and network: " + imageUrl);
-
             return null;
         }
 
@@ -181,46 +164,37 @@ namespace JetImageLoader
             {
                 return null;
             }
-
             var imageUriAsString = imageUri.ToString();
-
             if (imageUri.Scheme == "http" || imageUri.Scheme == "https")
             {
                 Log("[network] loading " + imageUriAsString);
                 var downloadResult = await Config.DownloaderImpl.DownloadAsync(imageUri);
-
                 if (downloadResult.Exception != null || downloadResult.ResultStream == null || downloadResult.ContentLength != downloadResult.ResultStream.Length)
                 {
-                    Log("[error] failed to download: " );
+                    Log("[error] failed to download: ");
                     return null;
                 }
-
-                Log("[network] loaded "  + imageUriAsString + " size " + downloadResult.ResultStream.Length + " header " + downloadResult.ContentLength);
-
+                Log("[network] loaded " + imageUriAsString + " size " + downloadResult.ResultStream.Length + " header " + downloadResult.ContentLength);
                 if (Config.CacheMode != CacheMode.NoCache)
                 {
                     if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyMemoryCache)
                     {
                         Config.MemoryCacheImpl.Put(imageUriAsString, downloadResult.ResultStream);
                     }
-
                     if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyStorageCache)
                     {
                         // Async saving to the storage cache without await
                         var saveAsync = Config.StorageCacheImpl.SaveAsync(imageUriAsString, downloadResult.ResultStream)
                             .ContinueWith(
                             task =>
-                            {
-                                if (task.IsFaulted || !task.Result)
-                                {
-                                    Log("[error] failed to save in storage: " + imageUri);
-                                   
-                                }
-                            }
-                        );
+                              {
+                                  if (task.IsFaulted || !task.Result)
+                                  {
+                                      Log("[error] failed to save in storage: " + imageUri);
+                                  }
+                              });
                     }
                 }
-
                 return downloadResult.ResultStream;
             }
             else if (imageUri.Scheme == "assets")
@@ -228,7 +202,6 @@ namespace JetImageLoader
                 // TODO implementation
                 return null;
             }
-
             return null;
         }
 
@@ -242,31 +215,26 @@ namespace JetImageLoader
             if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyMemoryCache)
             {
                 Stream memoryStream;
-
                 if (Config.MemoryCacheImpl.TryGetValue(imageUrl, out memoryStream))
                 {
                     Log("[memory] " + imageUrl);
                     return memoryStream;
                 }
             }
-
             if (Config.CacheMode == CacheMode.MemoryAndStorageCache || Config.CacheMode == CacheMode.OnlyStorageCache)
             {
                 if (Config.StorageCacheImpl.IsCacheExistsAndAlive(imageUrl))
                 {
                     Log("[storage] " + imageUrl);
                     var storageStream = await Config.StorageCacheImpl.LoadCacheStreamAsync(imageUrl);
-
                     // Moving cache to the memory
                     if (Config.CacheMode == CacheMode.MemoryAndStorageCache)
                     {
                         Config.MemoryCacheImpl.Put(imageUrl, storageStream);
                     }
-
                     return storageStream;
                 }
             }
-
             return null;
         }
 
@@ -283,7 +251,10 @@ namespace JetImageLoader
         /// <param name="message">to output</param>
         internal static void Log(string message)
         {
-            if (Instance != null && Instance.Config.IsLogEnabled) Debug.WriteLine("{0} {1}", JetImageLoaderLogTag, message);
+            if (Instance != null && Instance.Config.IsLogEnabled)
+                Debug.WriteLine("{0} {1}", JetImageLoaderLogTag, message);
         }
+
     }
+
 }

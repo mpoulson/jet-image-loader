@@ -1,7 +1,7 @@
-﻿
 using System;
-using System.Security.Cryptography;
 using System.Text;
+using Windows.Security.Cryptography;
+using Windows.Security.Cryptography.Core;
 
 namespace JetImageLoader.Cache.Storage.CacheFileNameGenerators
 {
@@ -10,6 +10,7 @@ namespace JetImageLoader.Cache.Storage.CacheFileNameGenerators
     /// </summary>
     public class SHA1CacheFileNameGenerator : ICacheFileNameGenerator
     {
+
         public string GenerateCacheFileName(string fileUrl)
         {
             return SHA1Helper.ComputeHash(fileUrl);
@@ -17,7 +18,7 @@ namespace JetImageLoader.Cache.Storage.CacheFileNameGenerators
 
         private static class SHA1Helper
         {
-            private static readonly SHA1Managed Sha1Managed = new SHA1Managed();
+            private static readonly HashAlgorithmProvider Sha1Managed = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha1);
             private static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding();
 
             /// <summary>
@@ -28,7 +29,9 @@ namespace JetImageLoader.Cache.Storage.CacheFileNameGenerators
             /// <returns>SHA1 hash from the source string</returns>
             public static string ComputeHash(string source)
             {
-                var hash = Sha1Managed.ComputeHash(Utf8Encoding.GetBytes(source.ToCharArray()));
+                byte[] tempBuffer;
+                CryptographicBuffer.CopyToByteArray(Sha1Managed.HashData(CryptographicBuffer.CreateFromByteArray(Utf8Encoding.GetBytes(source.ToCharArray()))), out tempBuffer);
+                var hash = tempBuffer;
                 return BitConverter.ToString(hash).Replace("-", "");
             }
         }

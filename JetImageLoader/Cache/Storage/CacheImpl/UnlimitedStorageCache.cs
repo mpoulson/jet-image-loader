@@ -1,4 +1,3 @@
-﻿
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Threading.Tasks;
@@ -29,9 +28,9 @@ namespace JetImageLoader.Cache.Storage.CacheImpl
         /// <param name="cacheKey">will be used by CacheFileNameGenerator</param>
         /// <param name="cacheStream">will be written to the cache file</param>
         /// <returns>true if cache was saved, false otherwise</returns>
-        public override Task<bool> SaveAsync(string cacheKey, Stream cacheStream)
+        public async override Task<bool> SaveAsync(string cacheKey, Stream cacheStream)
         {
-            return InternalSaveAsync(CacheFileNameGenerator.GenerateCacheFileName(cacheKey), cacheStream);
+            return await InternalSaveAsync(CacheFileNameGenerator.GenerateCacheFileName(cacheKey), cacheStream);
         }
-    }   
+    }
 }
